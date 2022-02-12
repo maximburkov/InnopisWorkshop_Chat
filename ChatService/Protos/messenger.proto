@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option csharp_namespace = "ChatService";
+
+package messenger;
+
+message Message {
+	string text = 1;
+	string username = 2;
+}
+
+message Response {
+	string text = 1;
+}
+
+message JoinRequest {
+	string username = 1;
+}
+
+service Messenger {
+	rpc Send (Message) returns (Response);
+	rpc Join (JoinRequest) returns (stream Message);
+}

@@ -1,0 +1,59 @@
+﻿@using ChatService;
+@using Grpc.Core
+
+@page "/messenger"
+@inject ChatService.Messenger.MessengerClient client
+
+<h3>Messenger</h3>
+
+@if (isJoined)
+{
+    <div class="alert alert-success">
+        You've joined as @username
+    </div>
+
+    @foreach (var message in history)
+    {
+        <div class="alert alert-dark">@message</div>
+    }
+
+   <textarea @bind="text" class="form-control"></textarea>
+    <br />
+    <button class="btn btn-primary" @onclick="OnSend">Send</button>
+}
+else
+{
+    <input type="text" @bind="username" class="form-control"/>
+    <button class="btn btn-primary" @onclick="OnJoin">Join chat</button>
+}
+
+
+
+@code {
+    private string text = string.Empty;
+    private string response = "Nothing";
+    private string username = string.Empty;
+    private List<string> history = new();
+
+    private bool isJoined = false;
+
+    private async Task OnSend()
+    {
+        var messageResponse = await client.SendAsync(new Message { Text = text, Username = username});
+        response = messageResponse.Text;
+    }
+
+    private async Task OnJoin()
+    {
+        using (var call = client.Join(new JoinRequest { Username = username }))
+        {
+            isJoined = true;
+
+            await foreach (var item in call.ResponseStream.ReadAllAsync())
+            {
+                history.Add($"{item.Username}: {item.Text}");
+                StateHasChanged();
+            }
+        }
+    } 
+}
